@@ -8,6 +8,7 @@ from typing import Optional
 import spotipy
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
+import mysql.connector
 
 import DbModule
 
@@ -45,8 +46,6 @@ class Music_saver:
       minutes: int = duration // 60000
       seconds: int = (duration - (minutes * 60000)) // 1000
       seconds = str(seconds).zfill(2)
-      with open("a.json", "w")as f:
-         json.dump(current_playing, f, indent=3)
       return [track_id, track_name, f"{minutes}:{seconds}", album, playing_time, artist_name]
 
    def main(self):
@@ -54,10 +53,13 @@ class Music_saver:
       while True:
          datas = self.get_song_data()
          if datas is not None and track_id != datas[0]:
-            self.db.multiple_insert("music", self.colums, datas[0:5])
-            for artist in datas[5]:
-               self.db.insert("artists", {"track_id": datas[0], "artist": artist})
-            track_id = datas[0]
+            try :
+               self.db.multiple_insert("music", self.colums, datas[0:5])
+               for artist in datas[5]:
+                  self.db.insert("artists", {"track_id": datas[0], "artist": artist})
+               track_id = datas[0]
+            except mysql.connector.errors.ProgrammingError:
+               pass
          time.sleep(self.interval)
 
 

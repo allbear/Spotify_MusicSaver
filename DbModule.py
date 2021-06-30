@@ -54,7 +54,7 @@ class DbModule:
       parameters = []
       for parameter in values:
          if isinstance(parameter, str):
-            parameters.append(str('\'' + parameter + '\''))
+            parameters.append(str('\"' + parameter + '\"'))
          else:
             if parameter is None:
                parameters.append("NULL")
