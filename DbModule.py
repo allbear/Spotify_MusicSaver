@@ -37,7 +37,7 @@ class DbModule:
       sql = "INSERT INTO `{table}` ({columns}) VALUES ({values})".format(
           table=table,
           columns=', '.join(columns),
-          values=', '.join(str('\'' + str(parameter) + '\'') for parameter in parameters)
+          values=', '.join(str('\"' + str(parameter) + '\"') for parameter in parameters)
       )
 
       try:
