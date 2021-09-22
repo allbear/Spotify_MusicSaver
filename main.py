@@ -51,6 +51,10 @@ class Music_saver:
          return [track_id, track_name, f"{minutes}:{seconds}", album, playing_time, artist_name]
       except requests.exceptions.ConnectionError:
          return None
+      except requests.exceptions.ReadTimeout:
+         return None
+      except TypeError:
+         return None
       except spotipy.exceptions.SpotifyException:
          return None
 
