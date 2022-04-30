@@ -1,6 +1,9 @@
+#環境変数
 .env
-.cache
 
-.vscode/
-__pycache__/
+#設定フォルダ等
+.cache
+.vscode
+.venv
+__pycache__
 .mypy_cache

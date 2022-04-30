@@ -1,4 +1,4 @@
-import json
+import sys
 import os
 from os.path import dirname, join
 import datetime
@@ -75,4 +75,7 @@ class Music_saver:
 
 if __name__ == '__main__':
    music = Music_saver()
-   music.main()
+   if len(sys.argv) > 1 and sys.argv[1] == "play":
+      music.play()
+   else:
+      music.main()
