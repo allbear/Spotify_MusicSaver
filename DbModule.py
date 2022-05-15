@@ -1,13 +1,9 @@
 import mysql.connector as connector
 import os
-from dotenv import load_dotenv
+import traceback
 
 
 class DbModule:
-   def __init__(self):
-      base_path = os.path.dirname(os.path.abspath(__file__))
-      dotenv_path = os.path.join(base_path, 'src/.env')
-      load_dotenv(dotenv_path)
 
    def __db_connect(self):
       try:
@@ -18,43 +14,25 @@ class DbModule:
              db=os.getenv('DB_DATABASE')
          )
          return db
-      except Exception as e:
-         print(e)
+      except Exception:
+         print(traceback.format_exc())
          raise
 
-   def __get_value(self, values: list):
-      return '({parameters})'.format(
-          parameters=', '.join(str('\'' + str(parameter) + '\'') for parameter in values)
-      )
+   def text_fix(self, query):
+      query = query.replace("'", "''")
+      query = query.replace("\\", "\\\\")  # 使えない文字を変換
+      return query
 
-   def insert(self, table: str, values: dict):
-      cnx = self.__db_connect()
-      cur = cnx.cursor()
-
-      columns = list(values.keys())
-      parameters = list(values.values())
-
-      sql = "INSERT INTO `{table}` ({columns}) VALUES ({values})".format(
-          table=table,
-          columns=', '.join(columns),
-          values=', '.join(str('\"' + str(parameter) + '\"') for parameter in parameters)
-      )
-
-      try:
-         cur.execute(sql)
-         cnx.commit()
-         return True
-      except BaseException:
-         cnx.rollback()
-         raise
-
-   def multiple_insert(self, table: str, columns: list, values: list):
+   def insert(self, table: str, datas: dict):
       cnx = self.__db_connect()
       cur = cnx.cursor()
       parameters = []
+      columns = list(datas.keys())
+      values = list(datas.values())
       for parameter in values:
          if isinstance(parameter, str):
-            parameters.append(str('\"' + parameter + '\"'))
+            parameter = self.text_fix(parameter)
+            parameters.append(str('\'' + parameter + '\''))
          else:
             if parameter is None:
                parameters.append("NULL")
@@ -78,6 +56,7 @@ class DbModule:
       parameters = []
       for parameter in values:
          if isinstance(parameter, str):
+            parameter = self.text_fix(parameter)
             parameters.append(str('\'' + parameter + '\''))
          else:
             if parameter is None:
@@ -90,6 +69,32 @@ class DbModule:
          cur.execute(sql)
          cnx.commit()
          return True
+      except BaseException:
+         cnx.rollback()
+         raise
+
+   def insert_bulk(self, table: str, values: list):
+      cnx = self.__db_connect()
+      cur = cnx.cursor()
+      bulk = []
+      for value in values:
+         parameters = []
+         for parameter in value:
+            if isinstance(parameter, str):
+               parameter = self.text_fix(parameter)
+               parameters.append(str('\'' + parameter + '\''))
+            else:
+               if parameter is None:
+                  parameters.append("NULL")
+               else:
+                  parameters.append(str(parameter))
+         parameters = ", ".join(parameters)
+         sql = f"INSERT INTO {table} VALUES ({parameters})"
+         bulk.append(sql)
+      for sql in bulk:
+         cur.execute(sql)
+      try:
+         cnx.commit()
       except BaseException:
          cnx.rollback()
          raise
@@ -109,6 +114,81 @@ class DbModule:
    def update(self, sql: str):
       cnx = self.__db_connect()
       cur = cnx.cursor()
+      sql = self.text_fix(sql)
+      try:
+         cur.execute(sql)
+         cnx.commit()
+      except BaseException:
+         cnx.rollback()
+         raise
+
+   def delete(self, sql: str):
+      cnx = self.__db_connect()
+      cur = cnx.cursor()
+      sql = self.text_fix(sql)
+      try:
+         cur.execute(sql)
+         cnx.commit()
+      except BaseException:
+         cnx.rollback()
+         raise
+
+   def parameter_fix(self, columns, values):
+      parameters = []
+      for parameter in values:
+         if isinstance(parameter, str):
+            parameter = self.text_fix(parameter)
+            parameters.append(str('\'' + parameter + '\''))
+         else:
+            if parameter is None:
+               parameters.append("NULL")
+            else:
+               parameters.append(str(parameter))
+      set_values = []
+      for i in range(len(columns)):
+         set_values.append(f"{columns[i]}={parameters[i]}")
+      return set_values
+
+   # 条件式がイコールだけかつ、論理積の時
+   def auto_update(self, table: str, values: dict, where: dict):
+      cnx = self.__db_connect()
+      cur = cnx.cursor()
+      columns = list(values.keys())
+      values = list(values.values())
+      set_values = self.parameter_fix(columns, values)
+      set_values = ", ".join(set_values)
+      sql = f"UPDATE {table} SET {set_values}"
+
+      # 条件式があった場合
+      if where is not None:
+         columns = list(where.keys())
+         values = list(where.values())
+         set_values = self.parameter_fix(columns, values)
+         set_values = "and ".join(set_values)
+         sql += f" where {set_values}"
+
+      try:
+         cur.execute(sql)
+         cnx.commit()
+      except BaseException:
+         cnx.rollback()
+         raise
+
+   # 条件式がイコールだけかつ、論理積の時
+   def auto_delete(self, table: str, where: dict):
+      cnx = self.__db_connect()
+      cur = cnx.cursor()
+
+      # 条件式があった場合
+      if where is not None:
+         columns = list(where.keys())
+         values = list(where.values())
+         set_values = self.parameter_fix(columns, values)
+         set_values = "and ".join(set_values)
+         sql = f"DELETE FROM {table} where {set_values}"
+      else:
+         sql = f"DELETE FROM {table}"
+
       try:
          cur.execute(sql)
          cnx.commit()

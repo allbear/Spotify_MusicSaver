@@ -1,9 +1,9 @@
-import sys
 import os
 from os.path import dirname, join
 import datetime
 import time
 from typing import Optional
+import traceback
 
 import spotipy
 import requests
@@ -50,12 +50,16 @@ class Music_saver:
          seconds = str(seconds).zfill(2)
          return [track_id, track_name, f"{minutes}:{seconds}", album, playing_time, artist_name]
       except requests.exceptions.ConnectionError:
+         print(traceback.format_exc())
          return None
       except requests.exceptions.ReadTimeout:
+         print(traceback.format_exc())
          return None
       except TypeError:
+         print(traceback.format_exc())
          return None
       except spotipy.exceptions.SpotifyException:
+         print(traceback.format_exc())
          return None
 
    def main(self):
@@ -64,18 +68,15 @@ class Music_saver:
          datas = self.get_song_data()
          if datas is not None and track_id != datas[0]:
             try:
-               self.db.multiple_insert("music", self.colums, datas[0:5])
+               self.db.allinsert("music", datas[0:5])
                for artist in datas[5]:
                   self.db.insert("artists", {"track_id": datas[0], "artist": artist})
                track_id = datas[0]
             except mysql.connector.errors.ProgrammingError:
-               pass
+               print(traceback.format_exc())
          time.sleep(self.interval)
 
 
 if __name__ == '__main__':
    music = Music_saver()
-   if len(sys.argv) > 1 and sys.argv[1] == "play":
-      music.play()
-   else:
-      music.main()
+   music.main()
