@@ -18,3 +18,7 @@ $ pipenv shell
 ```sh
 $ python main.py
 ```
+
+<img src="https://github.com/alrab223/Spotify_MusicSaver/blob/master/image/song_analyze.png">
+
+最近集計したやつ
