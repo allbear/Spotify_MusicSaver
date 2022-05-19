@@ -7,3 +7,7 @@
 .venv
 __pycache__
 .mypy_cache
+
+#フォルダ
+analyze
+test

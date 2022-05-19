@@ -50,6 +50,18 @@ class DbModule:
          cnx.rollback()
          raise
 
+   def get_columns(self, table):
+      cnx = self.__db_connect()
+      cur = cnx.cursor()
+      try:
+         cur.execute(f"DESC {table}")
+         response = cur.fetchall()
+         response = [x[0] for x in response]
+         cur.close()
+      except BaseException:
+         raise
+      return response
+
    def allinsert(self, table: str, values: list):
       cnx = self.__db_connect()
       cur = cnx.cursor()

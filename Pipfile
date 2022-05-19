@@ -8,6 +8,7 @@ requests = "*"
 python-dotenv = "*"
 spotipy = "*"
 mysql-connector-python = "*"
+pysimplegui = "*"
 
 [dev-packages]
 
