@@ -26,6 +26,5 @@ $ pipenv shell
 $ python main.py
 ```
 
-<img src="https://github.com/alrab223/Spotify_MusicSaver/blob/master/image/song_analyze.png">
-
-最近集計したやつ
+こちらは楽曲を解析した結果です
+https://qiita.com/alrab/items/7b1748a4a9163e0ff979
